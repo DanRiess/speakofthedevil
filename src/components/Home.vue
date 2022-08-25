@@ -4,8 +4,11 @@ import { onMounted, ref } from "vue";
 
 const isSmallScreen = window.innerWidth < parseFloat(getComputedStyle(document.body).fontSize) * 50 ? true : false
 
+const sloganWrapper = ref(null);
 const slogan = ref(null);
-const blurDash = ref(null);
+
+const blurDashHorizontal = ref(null);
+const blurDashVertical = ref(null);
 
 const introContainer = ref(null);
 const introDescription = ref(null);
@@ -53,20 +56,13 @@ function animateIntroductionIn() {
   }
 
   const introContainerHeight = Math.floor(introContainer.value.getBoundingClientRect().height)
+  const sloganWrapperHeight = Math.floor(sloganWrapper.value.getBoundingClientRect().height)
+  const blurDashHeight = introContainerHeight + sloganWrapperHeight / 2
+
   gsap
     .timeline()
-    .to(blurDash.value, { opacity: 0, transform: "scaleX(0.1)", duration: 0.3 })
-    .set(blurDash.value, {
-      transform: "rotate(90deg) scaleX(0.1)",
-      left: "50%",
-      width: introContainerHeight + 200 + 'px',
-      transformOrigin: "left center",
-    })
-    .to(blurDash.value, {
-      opacity: 1,
-      transform: "rotate(90deg) scaleX(1)",
-      duration: 0.5,
-    })
+    .to(blurDashHorizontal.value, { opacity: 0, transform: "scaleX(0.1)", duration: 0.3 })
+    .to(blurDashVertical.value, {opacity: 1, height: blurDashHeight + 250 + 'px', transform: 'translateX(-50%) scale(0.3, 1)', duration: 0.3})
     .set(introContainer.value, { visibility: "visible" }, '<')
     .to(introDescription.value, {
       transform: "translateX(0)",
@@ -83,9 +79,8 @@ function animateIntroductionOut() {
   if (isSmallScreen) return
 
   gsap.timeline()
-    .to(blurDash.value, {opacity: 0, transform: 'rotate(90deg) scaleX(0.1)', duration: 0.3})
-    .set(blurDash.value, {transform: 'rotate(0deg) scaleX(0.1)', width: '100%', left: 0, transformOrigin: 'center'})
-    .to(blurDash.value, {opacity: 1, transform: 'scale(1)', duration: 0.4})
+    .to(blurDashVertical.value, {opacity: 0, transform: 'translateX(-50%) scale(0)', duration: 0.3})
+    .to(blurDashHorizontal.value, {opacity: 1, transform: 'scale(1)', duration: 0.4})
 }
 
 function handleVitruvianIntersect() {
@@ -121,12 +116,15 @@ function animateVitruvianManOut() {
 }
 
 onMounted(() => {
-  slogan.value.after(blurDash.value);
+  // move the blurdash div to slogan container
+  slogan.value.after(blurDashHorizontal.value);
+  slogan.value.after(blurDashVertical.value);
+
   gsap
     .timeline()
     .from(slogan.value, { opacity: 0, duration: 1 }, "1")
     .from(
-      blurDash.value,
+      blurDashHorizontal.value,
       { opacity: 0, transform: "scale(0)", duration: 0.7 },
       "1"
     );
@@ -141,11 +139,14 @@ onMounted(() => {
   <div class="main" @wheel.passive="onWheel">
     <img
       src="../assets/shooting_thing_horizontal.png"
-      ref="blurDash"
-      class="blurDash"
+      ref="blurDashHorizontal"
+      class="blur-dash-horizontal"
     />
-    <div class="slogan-container">
-      <img src="../assets/darkness_glow.png" ref="slogan" />
+    <img src="../assets/shooting_thing_vertical.png" ref="blurDashVertical" class="blur-dash-vertical">
+    <div class="slogan-wrapper" ref="sloganWrapper">
+      <div class="slogan-container">
+        <img src="../assets/darkness_glow.png" ref="slogan" />
+      </div>
     </div>
     <div class="introduction-container" ref="introContainer">
       <div class="description" ref="introDescription">
@@ -166,7 +167,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="vitruvian-container" ref="vitruvianContainer">    
+    <div class="vitruvian-wrapper">
+      <div class="visual-stories">VisualStories</div>
+      <div class="vitruvian-container" ref="vitruvianContainer">    
         <img src="../assets/vitruvian_ring_black.png" alt="" class="vitruvian-circle" ref="vitruvianCircle">
 
         <img src="../assets/vitruvian_rotate_pc-04_black.png" alt="" class="vitruvian-rotate-4" ref="vitruvianLeftArm">
@@ -183,6 +186,8 @@ onMounted(() => {
         <img src="../assets/vitruvian_main_pc-07_black.png" class="vitruvian-main-7">
         <img src="../assets/vitruvian_main_pc-08_black.png" class="vitruvian-main-8">        
       </div>
+      <div class="inspiring-sessions">Inspiring Sessions</div>
+    </div>
   </div>
 </template>
 
@@ -192,18 +197,33 @@ onMounted(() => {
   width: 60%;
   margin-inline: auto;
 }
+
+.slogan-wrapper {
+  height: calc(100vh - 115px);
+  display: flex;
+  align-items: center
+}
+
 .slogan-container {
-  margin-top: 100px;
   position: relative;
 }
 
-.blurDash {
+.blur-dash-horizontal {
   position: absolute;
   top: 100%;
   margin-inline: auto;
 }
 
+.blur-dash-vertical {
+  position: absolute;
+  transform: translateX(-50%) scale(0);
+  transform-origin: top;
+  left: 50%;
+  opacity: 0;
+}
+
 .introduction-container {
+  font-family: 'Comfortaa', cursive;
   display: flex;
   gap: 10rem;
   margin-top: 100px;
@@ -215,21 +235,46 @@ onMounted(() => {
 .description {
   transform: translateX(-300px);
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .description h1 {
   font-size: 2.5rem;
   font-weight: bold;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  text-align: right;
+  line-height: 1.1;
+  opacity: 0.6;
 }
 
 .description p {
-  font-size: 1.2rem;
-  text-align: justify;
+  font-size: 1.1rem;
+  text-align: right;
+  opacity: 0.9
 }
 
 .self-portrait {
   transform: translateX(300px);
   flex: 1;
+}
+
+.vitruvian-wrapper {
+  display: grid;
+  grid-template-columns: 100px 1fr 100px;
+  margin-inline: auto;
+  margin-top: 100px;
+  padding-top: 100px;
+  width: 100%;
+  position: relative;
+}
+
+.inspiring-sessions, .visual-stories {
+  font-family: 'Comfortaa', cursive;
+  font-weight: bold;
+  margin-top: 100px;
 }
 
 .vitruvian-container {
@@ -239,13 +284,11 @@ onMounted(() => {
     "leftblank leftblank head head rightblank rightblank" 
     "leftarm leftarm torso torso rightarm rightarm" 
     "leftleg leftleg leftleg rightleg rightleg rightleg";
-  /* background: white; */
-  margin-inline: auto;
+  /* margin-inline: auto;
   margin-top: 100px;
   padding-top: 100px;
   width: 75%;
-  /* max-width: 500px; */
-  position: relative;
+  position: relative; */
 }
 
 /* .vitruvian-container::before {

@@ -78,6 +78,10 @@ header {
     /* background: red; */
     display: grid;
     grid-template-columns: 300px 1fr;
+    position: fixed;
+    background-color: black;
+    z-index:5;
+    width: 100%;
 }
 
 .header-logo-container {
